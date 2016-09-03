@@ -1,1 +1,244 @@
-<strong>hola</strong>
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Simple Album</title>
+
+	<base href="http://polygit.org/components/">
+
+	<script>
+	  // Setup Polymer options
+	  window.Polymer = {
+		dom: 'shadow',
+		lazyRegister: true
+	  };
+	  // Load webcomponentsjs polyfill if browser does not support native Web Components
+	  (function() {
+		'use strict';
+		var onload = function() {
+		  // For native Imports, manually fire WebComponentsReady so user code
+		  // can use the same code path for native and polyfill'd imports.
+		  if (!window.HTMLImports) {
+			document.dispatchEvent(
+			  new CustomEvent('WebComponentsReady', {bubbles: true})
+			);
+		  }
+		};
+		var webComponentsSupported = (
+		  'registerElement' in document
+		  && 'import' in document.createElement('link')
+		  && 'content' in document.createElement('template')
+		);
+		if (!webComponentsSupported) {
+		  var script = document.createElement('script');
+		  script.async = true;
+		  script.src = '/webcomponentsjs/webcomponents-lite.min.js';
+		  script.onload = onload;
+		  document.head.appendChild(script);
+		} else {
+		  onload();
+		}
+	  })();
+	</script>
+
+	<link href="polymer/polymer.html" rel="import">
+	<link href="app-route/app-location.html" rel="import">
+	<link href="app-route/app-route.html" rel="import">
+	<link href="iron-pages/iron-pages.html" rel="import">
+	<link href="iron-ajax/iron-ajax.html" rel="import">
+
+	<style>
+		body {
+			margin: 0;
+			background-color: #222;
+			font-family: -apple-system, BlinkMacSystemFont,
+						 "Segoe UI", "Roboto", "Oxygen",
+						 "Ubuntu", "Cantarell", "Fira Sans",
+						 "Droid Sans", "Helvetica Neue", sans-serif;
+		}
+
+		body,
+		a {
+			color: #eee;
+		}
+	</style>
+</head>
+<body>
+
+<!--   HOME-PAGE   -->
+
+<dom-module id="home-page">
+	<style>
+		:host {
+			display: block;
+			min-height: 100vh;
+			/*height: 100%;*/
+		}
+
+		:host .page {
+			display: flex;
+			flex-flow: column nowrap;
+			justify-content: center;
+		}
+	</style>
+
+	<template>
+		<div class="page">
+			<p>Enter album ID:</p>
+			<input type="text" value="{{albumId::change}}">
+		</div>
+	</template>
+
+	<script>
+		Polymer({
+			is: 'home-page',
+
+			properties: {
+				albumId: {
+					type: String,
+					reflectToAttribute: true,
+					notify: true
+				}
+			}
+		});
+	</script>
+</dom-module>
+
+<!--   ALBUM-PAGE   -->
+
+<dom-module id="album-page">
+	<style>
+		:host {
+			display: block;
+			min-height: 100vh;
+			/*height: 100%;*/
+		}
+	</style>
+
+	<template>
+		<h1><a href="[[link]]">[[title]]</a></h1>
+
+		<ul>
+			<template is="dom-repeat" items="[[images]]" as="image">
+				<li>
+					<figure>
+						<img src="[[image.src]]">
+						<figcaption>[[image.desc]]</figcaption>
+					</figure>
+				</li>
+			</template>
+		</ul>
+
+		<iron-ajax id="albumRequest"
+			url='https://api.imgur.com/3/album/[[albumId]]'
+			headers='{"Authorization": "Client-ID 692228d9f298de4"}'
+			handle-as="json"
+			on-response='_generateAlbum'></iron-ajax>
+	</template>
+
+	<script>
+		Polymer({
+			is: 'album-page',
+
+			properties: {
+				albumId: {
+					type: String,
+					observer: '_albumChanged'
+				},
+
+				title: String,
+
+				link: String,
+
+				images: {
+					type: Array,
+					value: function() {
+						return [];
+					}
+				}
+			},
+
+			_albumChanged: function(url) {
+				this.$.albumRequest.generateRequest();
+			},
+
+			_generateAlbum: function() {
+				var data = this.$.albumRequest.lastResponse.data;
+				this.title = data.title;
+				this.link = data.link;
+				this.images = data.images.map(function(img) {
+					return {
+						src: img.link,
+						desc: img.description
+					}
+				})
+			}
+		});
+	</script>
+</dom-module>
+
+<!--   SIMPLE-ALBUM   -->
+
+<dom-module id="simple-album">
+	<style>
+		:host {
+			display: block;
+			min-height: 100vh;
+			/*height: 100%;*/
+		}
+	</style>
+
+	<template>
+		<app-location route="{{route}}"></app-location>
+		<app-route route="{{route}}"
+				   pattern="/:page"
+				   data="{{routeData}}"
+				   tail="{{subroute}}"></app-route>
+
+		<iron-pages selected="[[page]]"
+					attr-for-selected="name"
+					selected-attribute="visible">
+			<home-page class="page" name="home" album-id="{{albumId}}"></home-page>
+			<album-page class="page" name="album" album-id="[[albumId]]"></album-page>
+		</iron-pages>
+	</template>
+
+	<script>
+		Polymer({
+			is: 'simple-album',
+
+			properties: {
+				page: {
+					type: String,
+					reflectToAttribute: true,
+					// observer: '_pageChanged'
+				},
+
+				albumId: {
+					type: String,
+					observer: '_albumChanged'
+				}
+			},
+
+			observers: [
+				'_routePageChanged(routeData.page)'
+			],
+
+			_routePageChanged: function(page) {
+				this.page = page || 'home'
+			},
+
+			// _pageChanged: function(page) {
+			// 	// XXX anything to do ???
+			// },
+
+			_albumChanged: function() {
+				this.page = 'album';
+			}
+		});
+	</script>
+</dom-module>
+
+<simple-album></simple-album>
+
+</body>
+</html>
