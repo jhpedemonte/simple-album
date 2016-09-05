@@ -89,6 +89,7 @@
 	</template>
 
 	<script>
+            addEventListener('WebComponentsReady', function() {
 		Polymer({
 			is: 'home-page',
 
@@ -100,6 +101,7 @@
 				}
 			}
 		});
+            });
 	</script>
 </dom-module>
 
@@ -136,6 +138,7 @@
 	</template>
 
 	<script>
+            addEventListener('WebComponentsReady', function() {
 		Polymer({
 			is: 'album-page',
 
@@ -173,6 +176,7 @@
 				})
 			}
 		});
+            });
 	</script>
 </dom-module>
 
@@ -203,6 +207,7 @@
 	</template>
 
 	<script>
+            addEventListener('WebComponentsReady', function() {
 		Polymer({
 			is: 'simple-album',
 
@@ -235,6 +240,7 @@
 				this.page = 'album';
 			}
 		});
+            });
 	</script>
 </dom-module>
 
