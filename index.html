@@ -62,19 +62,19 @@
 	</template>
 
 	<script>
-            addEventListener('WebComponentsReady', function() {
-		Polymer({
-			is: 'home-page',
+		addEventListener('WebComponentsReady', function() {
+			Polymer({
+				is: 'home-page',
 
-			properties: {
-				albumId: {
-					type: String,
-					reflectToAttribute: true,
-					notify: true
+				properties: {
+					albumId: {
+						type: String,
+						reflectToAttribute: true,
+						notify: true
+					}
 				}
-			}
+			});
 		});
-            });
 	</script>
 </dom-module>
 
@@ -111,45 +111,45 @@
 	</template>
 
 	<script>
-            addEventListener('WebComponentsReady', function() {
-		Polymer({
-			is: 'album-page',
+		addEventListener('WebComponentsReady', function() {
+			Polymer({
+				is: 'album-page',
 
-			properties: {
-				albumId: {
-					type: String,
-					observer: '_albumChanged'
+				properties: {
+					albumId: {
+						type: String,
+						observer: '_albumChanged'
+					},
+
+					title: String,
+
+					link: String,
+
+					images: {
+						type: Array,
+						value: function() {
+							return [];
+						}
+					}
 				},
 
-				title: String,
+				_albumChanged: function(url) {
+					this.$.albumRequest.generateRequest();
+				},
 
-				link: String,
-
-				images: {
-					type: Array,
-					value: function() {
-						return [];
-					}
+				_generateAlbum: function() {
+					var data = this.$.albumRequest.lastResponse.data;
+					this.title = data.title;
+					this.link = data.link;
+					this.images = data.images.map(function(img) {
+						return {
+							src: img.link,
+							desc: img.description
+						}
+					})
 				}
-			},
-
-			_albumChanged: function(url) {
-				this.$.albumRequest.generateRequest();
-			},
-
-			_generateAlbum: function() {
-				var data = this.$.albumRequest.lastResponse.data;
-				this.title = data.title;
-				this.link = data.link;
-				this.images = data.images.map(function(img) {
-					return {
-						src: img.link,
-						desc: img.description
-					}
-				})
-			}
+			});
 		});
-            });
 	</script>
 </dom-module>
 
@@ -180,40 +180,40 @@
 	</template>
 
 	<script>
-            addEventListener('WebComponentsReady', function() {
-		Polymer({
-			is: 'simple-album',
+		addEventListener('WebComponentsReady', function() {
+			Polymer({
+				is: 'simple-album',
 
-			properties: {
-				page: {
-					type: String,
-					reflectToAttribute: true,
-					// observer: '_pageChanged'
+				properties: {
+					page: {
+						type: String,
+						reflectToAttribute: true,
+						// observer: '_pageChanged'
+					},
+
+					albumId: {
+						type: String,
+						observer: '_albumChanged'
+					}
 				},
 
-				albumId: {
-					type: String,
-					observer: '_albumChanged'
+				observers: [
+					'_routePageChanged(routeData.page)'
+				],
+
+				_routePageChanged: function(page) {
+					this.page = page || 'home'
+				},
+
+				// _pageChanged: function(page) {
+				// 	// XXX anything to do ???
+				// },
+
+				_albumChanged: function() {
+					this.page = 'album';
 				}
-			},
-
-			observers: [
-				'_routePageChanged(routeData.page)'
-			],
-
-			_routePageChanged: function(page) {
-				this.page = page || 'home'
-			},
-
-			// _pageChanged: function(page) {
-			// 	// XXX anything to do ???
-			// },
-
-			_albumChanged: function() {
-				this.page = 'album';
-			}
+			});
 		});
-            });
 	</script>
 </dom-module>
 
