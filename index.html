@@ -171,11 +171,14 @@
 	</style>
 
 	<template>
-		<app-location route="{{route}}"></app-location>
+		<app-location route="{{route}}" use-hash-as-path></app-location>
 		<app-route route="{{route}}"
-				   pattern="#:page"
+				   pattern="/:page"
 				   data="{{routeData}}"
 				   tail="{{subroute}}"></app-route>
+		<app-route route="{{subroute}}"
+				   pattern="/:albumId"
+				   data="{{subrouteData}}"></app-route>
 
 		<iron-pages selected="[[page]]"
 					attr-for-selected="name"
@@ -193,7 +196,7 @@
 				properties: {
 					page: {
 						type: String,
-						reflectToAttribute: true,
+						reflectToAttribute: true
 						// observer: '_pageChanged'
 					},
 
@@ -204,11 +207,15 @@
 				},
 
 				observers: [
-					'_routePageChanged(routeData.page)'
+					'_routePageChanged(routeData.page)',
+					'_routePageChanged(routeData.page, subrouteData.albumId)'
 				],
 
-				_routePageChanged: function(page) {
-					this.page = page || 'home'
+				_routePageChanged: function(page, albumId) {
+					this.page = page || 'home';
+					if (albumId) {
+						this.albumId = albumId;
+					}
 				},
 
 				// _pageChanged: function(page) {
@@ -216,7 +223,7 @@
 				// },
 
 				_albumChanged: function() {
-					this.page = 'album';
+					this.set('route.path', '/album/' + this.albumId);
 				}
 			});
 		});
