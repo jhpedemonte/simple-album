@@ -176,10 +176,19 @@
 					this.link = data.link;
 					this.images = data.images.map(function(img) {
 						return {
-							src: img.link,
+							src: this._getThumbnailLink(img.link),
 							desc: img.description
 						}
-					})
+					}, this);
+				},
+
+				// m = medium
+				// l = large
+				// h = huge
+				_thumbnailSize: 'l',
+
+				_getThumbnailLink: function(url) {
+					return url.replace(/\.[a-zA-Z]+$/, this._thumbnailSize + '$&');
 				}
 			});
 		});
