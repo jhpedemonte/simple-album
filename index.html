@@ -151,7 +151,10 @@
 						observer: '_albumChanged'
 					},
 
-					title: String,
+					title: {
+						type: String,
+						notify: true
+					},
 
 					link: String,
 
@@ -210,8 +213,8 @@
 		<iron-pages selected="[[page]]"
 					attr-for-selected="name"
 					selected-attribute="visible">
-			<home-page class="page" name="home" album-id="{{albumId}}"></home-page>
-			<album-page class="page" name="album" album-id="[[albumId]]"></album-page>
+			<home-page class="page" name="home" album-id="{{albumId}}" title="{{title}}"></home-page>
+			<album-page class="page" name="album" album-id="[[albumId]]" title="{{title}}"></album-page>
 		</iron-pages>
 	</template>
 
@@ -230,6 +233,12 @@
 					albumId: {
 						type: String,
 						observer: '_albumChanged'
+					},
+
+					title: {
+						type: String,
+						value: 'Simple Album',
+						observer: '_titleChanged'
 					}
 				},
 
@@ -251,6 +260,10 @@
 
 				_albumChanged: function() {
 					this.set('route.path', '/album/' + this.albumId);
+				},
+
+				_titleChanged: function(title) {
+					document.title = title;
 				}
 			});
 		});
