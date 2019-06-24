@@ -3,22 +3,6 @@
 <head>
 	<title>Simple Album</title>
 
-	<base href="//polygit.org/polymer+v1.9.1/app-route+PolymerElements+v1.0.1/promise-polyfill+PolymerLabs+v1.0.1/components/">
-
-	<script>
-	  // Setup Polymer options
-	  window.Polymer = {
-		dom: 'shadow',
-		lazyRegister: true
-          };
-	</script>
-        <script src="webcomponentsjs/webcomponents-lite.min.js"></script>
-	<link href="polymer/polymer.html" rel="import">
-	<link href="app-route/app-location.html" rel="import">
-	<link href="app-route/app-route.html" rel="import">
-	<link href="iron-pages/iron-pages.html" rel="import">
-	<link href="iron-ajax/iron-ajax.html" rel="import">
-
 	<style>
 		body {
 			margin: 0;
@@ -29,257 +13,153 @@
 						 "Droid Sans", "Helvetica Neue", sans-serif;
 		}
 
+
 		body,
 		a {
 			color: #eee;
 		}
-	</style>
-</head>
-<body>
 
-<!--   HOME-PAGE   -->
+		/* page */
 
-<dom-module id="home-page">
-	<style>
-		:host {
+		.page {
 			display: flex;
 			flex-flow: column nowrap;
 			justify-content: center;
-			align-items: center;
 
 			min-height: 100vh;
-			/*height: 100%;*/
+			max-width: 50em;
+			margin: 0 auto;
 		}
 
-		:host .page {
+		/* home */
+		#home {
+			max-width: 20em;
 			font-size: smaller;
 			font-variant: small-caps;
 		}
-	</style>
 
-	<template>
-		<div class="page">
-			<p>Enter album ID:</p>
-			<input type="text" value="{{albumId::change}}">
-		</div>
-	</template>
-
-	<script>
-		addEventListener('WebComponentsReady', function() {
-			Polymer({
-				is: 'home-page',
-
-				properties: {
-					albumId: {
-						type: String,
-						reflectToAttribute: true,
-						notify: true
-					}
-				}
-			});
-		});
-	</script>
-</dom-module>
-
-<!--   ALBUM-PAGE   -->
-
-<dom-module id="album-page">
-	<style>
-		:host {
-			display: block;
-			min-height: 100vh;
-			/*height: 100%;*/
-			max-width: 50em;
+		body.album #home {
+			display: none;
 		}
 
-		:host,
-		:host a {
-			color: #eee;
+		/* album page */
+		body:not(.album) #album {
+			display: none;
 		}
 
-		:host ul {
+		ul {
 			list-style: none;
 			padding: 0;
 		}
 
-		:host li {
+		li {
 			margin-top: 3em;
 		}
 
-		:host figure {
+		figure {
 			margin: 0;
 		}
 
-		:host figure img {
+		figure img {
 			width: 100%;
 		}
 
-		:host figure figcaption {
+		figure figcaption {
 			margin-top: 1em;
 		}
 	</style>
-
-	<template>
-		<h1><a href="[[link]]">[[title]]</a></h1>
-
-		<ul>
-			<template is="dom-repeat" items="[[images]]" as="image">
-				<li>
-					<figure>
-						<img src="[[image.src]]">
-						<figcaption>[[image.desc]]</figcaption>
-					</figure>
-				</li>
-			</template>
-		</ul>
-
-		<iron-ajax id="albumRequest"
-			url='https://api.imgur.com/3/album/[[albumId]]'
-			headers='{"Authorization": "Client-ID 692228d9f298de4"}'
-			handle-as="json"
-			on-response='_generateAlbum'></iron-ajax>
-	</template>
+</head>
+<body>
+	<div id="home" class="page">
+		<p>Enter album ID:</p>
+		<input id="album_input" type="text" value="">
+	</div>
+	<div id="album" class="page">
+		<h1><a id="titleLink" href="href">Title</a></h1>
+		<ul id="images"></ul>
+	</div>
 
 	<script>
-		addEventListener('WebComponentsReady', function() {
-			Polymer({
-				is: 'album-page',
+		// const homeNode = document.querySelector('#home');
+		const albumPageNode = document.querySelector('#album');
+		const imagesNode = document.querySelector('#images');
 
-				properties: {
-					albumId: {
-						type: String,
-						observer: '_albumChanged'
-					},
+		init();
 
-					title: {
-						type: String,
-						notify: true
-					},
+		///////////////////////////////////////////////////////////////////////
 
-					link: String,
-
-					images: {
-						type: Array,
-						value: function() {
-							return [];
-						}
-					}
-				},
-
-				_albumChanged: function(url) {
-					this.$.albumRequest.generateRequest();
-				},
-
-				_generateAlbum: function() {
-					var data = this.$.albumRequest.lastResponse.data;
-					this.title = data.title;
-					this.link = data.link;
-					this.images = data.images.map(function(img) {
-						return {
-							src: this._getThumbnailLink(img.link),
-							desc: img.description
-						}
-					}, this);
-				},
-
-				// m = medium
-				// l = large
-				// h = huge
-				_thumbnailSize: 'l',
-
-				_getThumbnailLink: function(url) {
-					return url.replace(/\.[a-zA-Z]+$/, this._thumbnailSize + '$&');
-				}
-			});
-		});
-	</script>
-</dom-module>
-
-<!--   SIMPLE-ALBUM   -->
-
-<dom-module id="simple-album">
-	<style>
-		:host {
-			display: block;
-			min-height: 100vh;
-			/*height: 100%;*/
-
-			max-width: 50em;
-			margin: 0 auto;
+		function init() {
+			const params = new URLSearchParams(location.search);
+			if (params.has('album')) {
+				openAlbum(params.get('album'));
+			} else {
+				setupHome();
+			}
 		}
-	</style>
 
-	<template>
-		<app-location route="{{route}}" use-hash-as-path></app-location>
-		<app-route route="{{route}}"
-				   pattern="/:page"
-				   data="{{routeData}}"
-				   tail="{{subroute}}"></app-route>
-		<app-route route="{{subroute}}"
-				   pattern="/:albumId"
-				   data="{{subrouteData}}"></app-route>
+		function setupHome() {
+			const albumInput = document.querySelector('#album_input');
+			albumInput.addEventListener('change', () => {
+				const albumId = albumInput.value;
+				window.history.pushState({}, '', `${location.pathname}?album=${albumId}`);
+				openAlbum(albumId);
+			})
+		}
 
-		<iron-pages selected="[[page]]"
-					attr-for-selected="name"
-					selected-attribute="visible">
-			<home-page class="page" name="home" album-id="{{albumId}}" title="{{title}}"></home-page>
-			<album-page class="page" name="album" album-id="[[albumId]]" title="{{title}}"></album-page>
-		</iron-pages>
-	</template>
+		async function openAlbum(albumId) {
+			document.body.className = "album";
 
-	<script>
-		addEventListener('WebComponentsReady', function() {
-			Polymer({
-				is: 'simple-album',
-
-				properties: {
-					page: {
-						type: String,
-						reflectToAttribute: true
-						// observer: '_pageChanged'
-					},
-
-					albumId: {
-						type: String,
-						observer: '_albumChanged'
-					},
-
-					title: {
-						type: String,
-						value: 'Simple Album',
-						observer: '_titleChanged'
+			try {
+				const response = await fetch(`https://api.imgur.com/3/album/${albumId}`, {
+					headers: {
+						"Authorization": "Client-ID 692228d9f298de4"
 					}
-				},
+				});
 
-				observers: [
-					'_routePageChanged(routeData.page)',
-					'_routePageChanged(routeData.page, subrouteData.albumId)'
-				],
-
-				_routePageChanged: function(page, albumId) {
-					this.page = page || 'home';
-					if (albumId) {
-						this.albumId = albumId;
-					}
-				},
-
-				// _pageChanged: function(page) {
-				// 	// XXX anything to do ???
-				// },
-
-				_albumChanged: function() {
-					this.set('route.path', '/album/' + this.albumId);
-				},
-
-				_titleChanged: function(title) {
-					document.title = title;
+				if (response.status === 404) {
+					handleError('404');
 				}
-			});
-		});
+	
+				const data = await response.json();
+				generateAlbum(data);
+			} catch (err) {
+				handleError(err);
+			}
+		}
+			
+		function handleError(err) {
+			albumPageNode.innerHTML = `<h1>Error loading album: ${err}</h1>`;
+		}
+
+		function generateAlbum({ data }) {
+			const titleLink = document.querySelector('#titleLink');
+			titleLink.href = data.link;
+			titleLink.innerText = data.title;
+			document.title = data.title;
+
+			const images = data.images.map(img => {
+				const src = getThumbnailLink(img.link);
+				const desc = img.description || '';
+
+				const li = document.createElement('li');
+				li.innerHTML = `<figure>
+						<img src="${src}">
+						<figcaption>${desc}</figcaption>
+					</figure>`;
+				imagesNode.appendChild(li);
+			}, this);
+
+		}
+
+		// m = medium
+		// l = large
+		// h = huge
+		const thumbnailSize = 'l';
+
+		function getThumbnailLink(url) {
+			return url.replace(/\.[a-zA-Z]+$/, thumbnailSize + '$&');
+		}
+
 	</script>
-</dom-module>
-
-<simple-album></simple-album>
-
 </body>
 </html>
